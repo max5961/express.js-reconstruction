@@ -1,8 +1,6 @@
-import { HttpRequest, Next } from "./lib/types";
+import { HttpError, HttpRequest, Next } from "./lib/types";
 import HttpResponse from "./lib/HttpResponse";
-import path from "node:path";
 import express from "./lib/App";
-import fs from "fs/promises";
 
 const app = express();
 
@@ -26,11 +24,21 @@ app.get("/", (req: HttpRequest, res: HttpResponse) => {
 });
 
 app.get("/api", (req: HttpRequest, res: HttpResponse) => {
+    throw new Error("LOL");
     res.status(200).json({ foo: "bar" });
 });
 
 app.get("/users", (req: HttpRequest, res: HttpResponse) => {
     res.status(200).send("hello world");
+});
+
+app.use((err: HttpError, req: HttpRequest, res: HttpResponse, next: Next) => {
+    throw new Error("Lol but again");
+    res.status(500).send(err.message);
+});
+
+app.use((err: HttpError, req: HttpRequest, res: HttpResponse, next: Next) => {
+    res.status(500).send(err.message);
 });
 
 app.listen(5000, () => {

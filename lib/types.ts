@@ -9,9 +9,9 @@ export type HttpRequest = http.IncomingMessage & {
     params?: any;
 };
 
-export type Next = () => void;
-export type Handler = (req: HttpRequest, res: HttpResponse, next: Next) => void;
 export type HttpError = Error & { [key: string]: string };
+export type Next = (err?: HttpError) => void;
+export type Handler = (req: HttpRequest, res: HttpResponse, next: Next) => void;
 export type ErrorHandler = (
     err: HttpError,
     req: HttpRequest,

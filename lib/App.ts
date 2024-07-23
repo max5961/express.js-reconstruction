@@ -1,25 +1,12 @@
 import http from "http";
-import EventEmitter from "events";
-import Layer from "./Layer";
 import HttpResponse from "./HttpResponse";
-import { HttpRequest, Handler, AppMethod, HttpError } from "./types";
-import assert from "assert";
+import Router from "./Router";
+import { HttpError, HttpRequest } from "./types";
+import Layer from "./Layer";
 
-type RouteMiddlewareMethod = (path: string, handler: Handler) => void;
-type MiddlewareMethod = (handler: Handler) => void;
-
-class App extends EventEmitter {
-    public stack: Layer[];
-
-    public get!: RouteMiddlewareMethod;
-    public post!: RouteMiddlewareMethod;
-    public put!: RouteMiddlewareMethod;
-    public delete!: RouteMiddlewareMethod;
-    public use!: MiddlewareMethod;
-
+class App extends Router {
     constructor() {
         super();
-        this.stack = [];
     }
 
     dispatch = (req: HttpRequest, res: HttpResponse) => {
@@ -27,21 +14,29 @@ class App extends EventEmitter {
 
         const next = (err?: HttpError): void => {
             if (idx >= this.stack.length) {
-                return res.status(404).send("Page cannot be found");
+                return res.status(404).send("Default error message");
             }
 
             const layer = this.stack[idx++] as Layer;
 
             // Execute any non-route handling middleware
-            if (layer.route === null) {
-                return layer.handler(req, res, next);
+            if (!layer.route) {
+                if (err && layer.errorHandler) {
+                    return layer.errorHandler(err, req, res, next);
+                }
+
+                if (layer.handler) {
+                    return layer.handler(req, res, next);
+                }
             }
 
             const match =
                 req.url === layer.route && req.method === layer.method;
 
             if (match) {
-                layer.handler(req, res, next);
+                layer.handler && layer.handler(req, res, next);
+            } else if (err) {
+                next(err);
             } else {
                 next();
             }
@@ -51,7 +46,9 @@ class App extends EventEmitter {
     };
 
     begin = (req: http.IncomingMessage, res: http.ServerResponse): void => {
-        this.dispatch(req, new HttpResponse(res));
+        const httpResponse = new HttpResponse(res);
+
+        this.dispatch(req, httpResponse);
     };
 
     listen = (port: number, cb?: () => any): void => {
@@ -59,51 +56,6 @@ class App extends EventEmitter {
         server.listen(port, cb);
     };
 }
-
-// Will Implement
-class Route {}
-
-(["get", "post", "put", "delete", "use"] as Lowercase<AppMethod>[]).forEach(
-    (method) => {
-        App.prototype[method] = function (
-            pathOrHandler: string | Handler,
-            handlerOrRoute?: Handler,
-        ): App {
-            const stack = this.stack as Layer[];
-            const layer = new Layer().addMethod(
-                method.toUpperCase() as AppMethod,
-            );
-
-            /* (path, callback)*/
-            if (
-                typeof pathOrHandler === "string" &&
-                typeof handlerOrRoute === "function"
-            ) {
-                assert(
-                    handlerOrRoute !== undefined,
-                    "Missing middleware argument",
-                );
-                const route = pathOrHandler;
-                const handler = handlerOrRoute;
-                layer.addRoute(route).addHandler(handler);
-
-                /* (path, Route)*/
-            } else if (
-                typeof pathOrHandler === "string" &&
-                handlerOrRoute instanceof Route
-            ) {
-                // 1. Need to prepend path to Route
-                // 2. Need to configure Route Layers and spread them into App stack
-                /* (callback)*/
-            } else if (typeof pathOrHandler === "function") {
-                layer.addHandler(pathOrHandler);
-            }
-
-            layer.isMod && stack.push(layer);
-            return this;
-        };
-    },
-);
 
 export default function createApplication(): App {
     return new App();

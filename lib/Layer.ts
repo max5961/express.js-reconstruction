@@ -1,14 +1,24 @@
-import { Handler, AppMethod, HttpRequest, Next } from "./types";
+import {
+    Handler,
+    AppMethod,
+    HttpRequest,
+    Next,
+    ErrorHandler,
+    HttpError,
+} from "./types";
 import HttpResponse from "./HttpResponse";
 
 export default class Layer {
     public route!: string | null;
     public method!: AppMethod;
-    public handler!: Handler;
+    public handler!: Handler | null;
+    public errorHandler!: ErrorHandler | null;
     private _isMod: boolean;
 
     constructor() {
         this.route = null;
+        this.handler = null;
+        this.errorHandler = null;
         this._isMod = false;
     }
 
@@ -28,14 +38,28 @@ export default class Layer {
     }
 
     addHandler(handler: Handler): Layer {
-        this.handler = async (
+        this.handler = (req: HttpRequest, res: HttpResponse, next: Next) => {
+            const asyncHandler = async () => handler(req, res, next);
+            return Promise.resolve(asyncHandler()).catch((err) => {
+                next(err);
+            });
+        };
+
+        this._isMod = true;
+        return this;
+    }
+
+    addErrorHandler(errorHandler: ErrorHandler): Layer {
+        this.errorHandler = async (
+            err: HttpError,
             req: HttpRequest,
             res: HttpResponse,
             next: Next,
         ) => {
-            Promise.resolve(handler(req, res, next)).catch(next);
+            const asyncHandler = async () => errorHandler(err, req, res, next);
+            return Promise.resolve(asyncHandler()).catch(next);
         };
-        this._isMod = true;
+
         return this;
     }
 
