@@ -25,7 +25,7 @@ app.get("/", (req: HttpRequest, res: HttpResponse) => {
 
 app.get("/api", (req: HttpRequest, res: HttpResponse) => {
     throw new Error("LOL");
-    res.status(200).json({ foo: "bar" });
+    // res.status(200).json({ foo: "bar" });
 });
 
 app.get("/users", (req: HttpRequest, res: HttpResponse) => {
@@ -37,9 +37,9 @@ app.use((err: HttpError, req: HttpRequest, res: HttpResponse, next: Next) => {
     res.status(500).send(err.message);
 });
 
-app.use((err: HttpError, req: HttpRequest, res: HttpResponse, next: Next) => {
-    res.status(500).send(err.message);
-});
+// app.use((err: HttpError, req: HttpRequest, res: HttpResponse, next: Next) => {
+//     res.status(500).send(err.stack ?? err.toString());
+// });
 
 app.listen(5000, () => {
     console.log("Server listening on port 5000");

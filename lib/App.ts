@@ -4,6 +4,27 @@ import Router from "./Router";
 import { HttpError, HttpRequest } from "./types";
 import Layer from "./Layer";
 
+/*
+ * App needs to NOT extend router, but instead needs to create a Router instance
+ * upon instantiation.  Also upon instantiation, the App must call this.router.dispatch
+ * itself to kick things off.  Since the App instance is always the base Router,
+ * this grants us the opportunity to handle any Errors that get passed down to us
+ * in any way to end things, or create a 'default response'. In Express the default
+ * response is `Cannot ${req.method} ${req.url}` */
+
+/* Note in addition to executing this.router.dispatch, we will also need to
+ * make sure that the app/router.use(path, router) modifies the Router instance
+ * root path */
+
+/* Note, at runtime the script executes and modifies the Router instance base
+ * path when the script reaches the use method that 'uses' the Router. Then it
+ * need to push a Layer onto its stack that curries in the 'next' function
+ * from the outer instance into the Router instance and dispatches the Router
+ * instance */
+
+/*
+ * It would also be helpful to make Router a callable class such that we
+ * could place it in app.use("/router-route", router); */
 class App extends Router {
     constructor() {
         super();
@@ -14,7 +35,11 @@ class App extends Router {
 
         const next = (err?: HttpError): void => {
             if (idx >= this.stack.length) {
-                return res.status(404).send("Default error message");
+                if (err) {
+                    console.log("ayooooo");
+                    return res.status(500).send(err.stack ?? err.message);
+                }
+                return res.status(404).send("404 Not Found");
             }
 
             const layer = this.stack[idx++] as Layer;
