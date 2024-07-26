@@ -22,7 +22,7 @@ type MiddlewareMethod = (
 export default class Router extends EventEmitter {
     public stack: Layer[];
     public base: string;
-    public router: Router | null;
+    public routers: Router[];
 
     public get!: MiddlewareMethod;
     public post!: MiddlewareMethod;
@@ -32,7 +32,7 @@ export default class Router extends EventEmitter {
     constructor() {
         super();
         this.stack = [];
-        this.router = null;
+        this.routers = [];
         this.base = "/";
     }
 
@@ -55,6 +55,12 @@ export default class Router extends EventEmitter {
         assert(path.startsWith("/"));
 
         this.base = this.getRoute(path);
+    }
+
+    prependRoute(path: string): void {
+        assert(path.startsWith("/"));
+
+        this.base = path + this.base;
     }
 
     dispatch = (req: HttpRequest, res: HttpResponse, done: Next) => {
@@ -125,9 +131,9 @@ export default class Router extends EventEmitter {
         if (!layer.route) return false;
         const route = this.getRoute(layer.route);
 
-        console.log(
-            `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
-        );
+        // console.log(
+        //     `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
+        // );
 
         return req.url === route && req.method === layer.method;
     }
@@ -203,9 +209,14 @@ export default class Router extends EventEmitter {
         // app.use(routerInstance) have been handled
         else if (handlerOrRouter instanceof Router) {
             const router = handlerOrRouter;
+            this.routers.push(router);
 
             // Append route to router.base (which is by default "/");
-            router.appendRoute(route || "");
+            router.appendRoute(route || "/");
+
+            router.routers.forEach((r) => {
+                r.prependRoute(router.base);
+            });
 
             // Append middleware to this current Routers stack that will
             // execute the middleware in the routers stack

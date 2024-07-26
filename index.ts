@@ -37,8 +37,6 @@ usersRouter.get("/foo", (req: HttpRequest, res: HttpResponse) => {
 });
 
 /* NESTED ROUTER */
-/* The problem with this is that the route only gets updated when it gets used,
- * app.use(path, router) will need to trigger a recursive chain */
 const nestedRouter = new Router();
 nestedRouter.get("/", (req: HttpRequest, res: HttpResponse) => {
     res.status(200).send("/users/nested");
@@ -47,7 +45,6 @@ nestedRouter.get("/foo", (req: HttpRequest, res: HttpResponse) => {
     res.status(200).send("/users/nested/foo");
 });
 
-// Right now, usersRouter is still /, so we aren't routing /users/nested, but just /nested
 usersRouter.use("/nested", nestedRouter);
 
 app.use("/users", usersRouter);
