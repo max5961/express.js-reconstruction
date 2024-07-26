@@ -19,8 +19,6 @@ type MiddlewareMethod = (
     ...argsHandlers: Function[]
 ) => void;
 
-type Done = (err?: HttpError) => void;
-
 export default class Router extends EventEmitter {
     public stack: Layer[];
     public base: string;
@@ -38,13 +36,25 @@ export default class Router extends EventEmitter {
         this.base = "/";
     }
 
-    appendRoute(path: string): void {
-        if (this.base.endsWith("/")) {
-            const length = this.base.length;
-            this.base = this.base.slice(0, length);
+    getRoute(path: string): string {
+        assert(path.startsWith("/"));
+
+        const route = this.base + path;
+        if (route.startsWith("//")) {
+            return route.slice(1);
         }
 
-        this.base.concat("", path);
+        if (route.endsWith("/")) {
+            return route.slice(0, route.length - 1);
+        }
+
+        return route;
+    }
+
+    appendRoute(path: string): void {
+        assert(path.startsWith("/"));
+
+        this.base = this.getRoute(path);
     }
 
     dispatch = (req: HttpRequest, res: HttpResponse, done: Next) => {
@@ -97,8 +107,7 @@ export default class Router extends EventEmitter {
                 }
             }
 
-            const match =
-                req.url === layer.route && req.method === layer.method;
+            const match = this.isMatch(req, layer);
 
             if (match) {
                 return layer.handler && layer.handler(req, res, next);
@@ -111,6 +120,17 @@ export default class Router extends EventEmitter {
 
         next();
     };
+
+    isMatch(req: HttpRequest, layer: Layer): boolean {
+        if (!layer.route) return false;
+        const route = this.getRoute(layer.route);
+
+        console.log(
+            `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
+        );
+
+        return req.url === route && req.method === layer.method;
+    }
 
     use(
         routeOrHandler: string | Function | Function[],
@@ -194,7 +214,7 @@ export default class Router extends EventEmitter {
                 res: HttpResponse,
                 done: Next,
             ) => {
-                return this.dispatch(req, res, done);
+                router.dispatch(req, res, done);
             };
 
             const layer = new Layer().addHandler(handler);

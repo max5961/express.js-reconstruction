@@ -7,6 +7,7 @@ import {
     HttpError,
 } from "./types";
 import HttpResponse from "./HttpResponse";
+import assert from "assert";
 
 export default class Layer {
     public route!: string | null;
