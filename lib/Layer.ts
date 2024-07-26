@@ -1,13 +1,12 @@
 import {
+    Req,
+    Res,
     Handler,
     AppMethod,
-    HttpRequest,
     Next,
     ErrorHandler,
     HttpError,
 } from "./types";
-import HttpResponse from "./HttpResponse";
-import assert from "assert";
 
 export default class Layer {
     public route!: string | null;
@@ -39,7 +38,7 @@ export default class Layer {
     }
 
     addHandler(handler: Handler): Layer {
-        this.handler = (req: HttpRequest, res: HttpResponse, next: Next) => {
+        this.handler = (req: Req, res: Res, next: Next) => {
             const asyncHandler = async () => handler(req, res, next);
             return Promise.resolve(asyncHandler()).catch((err) => {
                 next(err);
@@ -53,8 +52,8 @@ export default class Layer {
     addErrorHandler(errorHandler: ErrorHandler): Layer {
         this.errorHandler = (
             err: HttpError,
-            req: HttpRequest,
-            res: HttpResponse,
+            req: Req,
+            res: Res,
             next: Next,
         ) => {
             const asyncHandler = async () => errorHandler(err, req, res, next);

@@ -1,13 +1,13 @@
 import Layer from "./Layer";
 import {
-    HttpRequest,
+    Req,
+    Res,
     Handler,
     ErrorHandler,
     AppMethod,
     Next,
     HttpError,
 } from "./types";
-import HttpResponse from "./HttpResponse";
 import EventEmitter from "events";
 import fs from "fs";
 import path from "path";
@@ -23,6 +23,7 @@ export default class Router extends EventEmitter {
     public stack: Layer[];
     public base: string;
     public routers: Router[];
+    public debug: boolean;
 
     public get!: MiddlewareMethod;
     public post!: MiddlewareMethod;
@@ -34,15 +35,16 @@ export default class Router extends EventEmitter {
         this.stack = [];
         this.routers = [];
         this.base = "/";
+        this.debug = false;
     }
 
+    /* Returns the Layer route appended to the Route, but does not modify
+     * the base route.
+     * Used with isMatch to match Request URLS to Layer Routes */
     getRoute(path: string): string {
         assert(path.startsWith("/"));
 
-        const route = this.base + path;
-        if (route.startsWith("//")) {
-            return route.slice(1);
-        }
+        const route = (this.base + path).split("//").join("/");
 
         if (route.endsWith("/")) {
             return route.slice(0, route.length - 1);
@@ -63,7 +65,17 @@ export default class Router extends EventEmitter {
         this.base = path + this.base;
     }
 
-    dispatch = (req: HttpRequest, res: HttpResponse, done: Next) => {
+    /* Make sure every nested router has the correct path prepended */
+    prependRouters(route: string) {
+        if (!this.routers.length) return;
+
+        this.routers.forEach((router) => {
+            router.prependRoute(route);
+            router.prependRouters(route);
+        });
+    }
+
+    dispatch = (req: Req, res: Res, done: Next) => {
         let idx = 0;
         let sync = 0;
 
@@ -127,15 +139,107 @@ export default class Router extends EventEmitter {
         next();
     };
 
-    isMatch(req: HttpRequest, layer: Layer): boolean {
+    isMatch(req: Req, layer: Layer): boolean {
         if (!layer.route) return false;
         const route = this.getRoute(layer.route);
 
-        // console.log(
-        //     `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
-        // );
+        if (this.debug) {
+            console.log(
+                `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
+            );
+        }
 
         return req.url === route && req.method === layer.method;
+    }
+
+    handleUseNoRoute(
+        handler: Function | Function[],
+        ...args: Function[]
+    ): Router {
+        const allHandlers: Function[] = [];
+
+        if (Array.isArray(handler)) {
+            allHandlers.push(...handler);
+        } else {
+            allHandlers.push(handler);
+        }
+
+        if (handler && Array.isArray(handler)) {
+            allHandlers.push(...handler);
+        } else if (handler) {
+            allHandlers.push(handler);
+        }
+
+        allHandlers.push(...args);
+
+        allHandlers.forEach((h) => {
+            const layer = new Layer();
+            if (h.length > 3) {
+                layer.addErrorHandler(h as ErrorHandler);
+            } else {
+                layer.addHandler(h as Handler);
+            }
+            this.stack.push(layer);
+        });
+
+        return this;
+    }
+
+    handleUseWithRoute(
+        route: string,
+        handler: Function | Function[],
+        ...args: Function[]
+    ): Router {
+        const handlers: Function[] = Array.isArray(handler)
+            ? handler
+            : [handler, ...args];
+
+        this.stack.push(
+            ...handlers.map((handler) => {
+                const layer = new Layer();
+
+                if (handler.length === 1) {
+                    // For express.static. Returns a Layer, but needed a way
+                    // to get a dynamic route argument into each layer.
+                    return handler(route);
+                } else if (handler.length === 4) {
+                    layer.addErrorHandler(handler as ErrorHandler);
+                } else {
+                    layer.addHandler(handler as Handler);
+                }
+
+                route && layer.addRoute(route);
+                layer.addMethod("GET");
+
+                return layer;
+            }),
+        );
+
+        return this;
+    }
+
+    handleUseRouter(route: string | undefined, router: Router): Router {
+        this.routers.push(router);
+
+        // Append route to router.base (which is by default "/");
+        // router.prependRoute(route || "/");
+
+        // router.routers.forEach((r) => {
+        //     r.prependRoute(router.base);
+        // });
+        this.prependRouters(route || "");
+
+        // Append middleware to this current Routers stack that will
+        // execute the middleware in the routers stack
+        const handler = (req: Req, res: Res, done: Next) => {
+            router.dispatch(req, res, done);
+        };
+
+        const layer = new Layer().addHandler(handler);
+
+        this.stack.push(layer);
+
+        return this;
     }
 
     use(
@@ -148,96 +252,17 @@ export default class Router extends EventEmitter {
         const route =
             typeof routeOrHandler === "string" ? routeOrHandler : undefined;
 
-        // app.use(cb, cb, cb) || app.use([cb, cb, cb]);
         if (!route && !(handlerOrRouter instanceof Router)) {
             assert(typeof routeOrHandler !== "string");
-            const handlers: Function[] = [];
-
-            if (Array.isArray(routeOrHandler)) {
-                handlers.push(...routeOrHandler);
-            } else {
-                handlers.push(routeOrHandler);
-            }
-
-            if (handlerOrRouter && Array.isArray(handlerOrRouter)) {
-                handlers.push(...handlerOrRouter);
-            } else if (handlerOrRouter) {
-                handlers.push(handlerOrRouter);
-            }
-
-            handlers.push(...args);
-
-            for (const handler of handlers) {
-                const layer = new Layer();
-                if (handler.length > 3) {
-                    layer.addErrorHandler(handler as ErrorHandler);
-                } else {
-                    layer.addHandler(handler as Handler);
-                }
-                this.stack.push(layer);
-            }
-
-            // for express.static or other middleware that accepts a path argument
+            return this.handleUseNoRoute(routeOrHandler!, ...args);
         } else if (handlerOrRouter && !(handlerOrRouter instanceof Router)) {
-            const handlers: Function[] = Array.isArray(handlerOrRouter)
-                ? handlerOrRouter
-                : [handlerOrRouter, ...args];
-
-            this.stack.push(
-                ...handlers.map((handler) => {
-                    const layer = new Layer();
-
-                    if (handler.length === 1) {
-                        // For express.static. Returns a Layer, but needed a way
-                        // to get a dynamic route argument into each layer.
-                        return handler(route);
-                    } else if (handler.length === 4) {
-                        layer.addErrorHandler(handler as ErrorHandler);
-                    } else {
-                        layer.addHandler(handler as Handler);
-                    }
-
-                    route && layer.addRoute(route);
-                    layer.addMethod("GET");
-
-                    return layer;
-                }),
-            );
-        }
-
-        // All combinations besides app.use("/path", routerInstance) or
-        // app.use(routerInstance) have been handled
-        else if (handlerOrRouter instanceof Router) {
-            const router = handlerOrRouter;
-            this.routers.push(router);
-
-            // Append route to router.base (which is by default "/");
-            router.appendRoute(route || "/");
-
-            router.routers.forEach((r) => {
-                r.prependRoute(router.base);
-            });
-
-            // Append middleware to this current Routers stack that will
-            // execute the middleware in the routers stack
-            const handler = (
-                req: HttpRequest,
-                res: HttpResponse,
-                done: Next,
-            ) => {
-                router.dispatch(req, res, done);
-            };
-
-            const layer = new Layer().addHandler(handler);
-
-            this.stack.push(layer);
+            assert(typeof route === "string");
+            return this.handleUseWithRoute(route, handlerOrRouter, ...args);
+        } else if (handlerOrRouter instanceof Router) {
+            return this.handleUseRouter(route, handlerOrRouter);
         } else {
-            // Could get rid of this, but its best to keep it for devel and
-            // would notify the user why a handler was not executing
             throw new Error("Invalid function signature");
         }
-
-        return this;
     }
 
     static(filePath: string) {
@@ -250,11 +275,7 @@ export default class Router extends EventEmitter {
                     getRoute = `${route}/${file}`;
                 }
 
-                const handler = (
-                    req: HttpRequest,
-                    res: HttpResponse,
-                    next: Next,
-                ): void => {
+                const handler = (req: Req, res: Res, next: Next): void => {
                     res.status(200).sendFile(
                         path.resolve(`${filePath}/${file}`),
                     );
