@@ -50,7 +50,7 @@ export default class Layer {
     }
 
     addErrorHandler(errorHandler: ErrorHandler): Layer {
-        this.errorHandler = async (
+        this.errorHandler = (
             err: HttpError,
             req: HttpRequest,
             res: HttpResponse,
