@@ -39,10 +39,11 @@ export default class Layer {
 
     addHandler(handler: Handler): Layer {
         this.handler = (req: Req, res: Res, next: Next) => {
-            const asyncHandler = async () => handler(req, res, next);
-            return Promise.resolve(asyncHandler()).catch((err) => {
+            try {
+                handler(req, res, next);
+            } catch (err) {
                 next(err);
-            });
+            }
         };
 
         this._isMod = true;
@@ -56,8 +57,11 @@ export default class Layer {
             res: Res,
             next: Next,
         ) => {
-            const asyncHandler = async () => errorHandler(err, req, res, next);
-            return Promise.resolve(asyncHandler()).catch(next);
+            try {
+                errorHandler(err, req, res, next);
+            } catch (err) {
+                next(err);
+            }
         };
 
         return this;

@@ -17,13 +17,13 @@ export type HttpError =
     | "route";
 
 export type Next = (err?: HttpError) => void;
-export type Handler = (req: Req, res: Res, next: Next) => void | Promise<void>;
+export type Handler = (req: Req, res: Res, next: Next) => void;
 export type ErrorHandler = (
     err: HttpError,
     req: Req,
     res: Res,
     next: Next,
-) => void | Promise<void>;
+) => void;
 
 // export type H<Req = HttpRequest, Res = HttpResponse, N = Next> = (
 //     req: Req,

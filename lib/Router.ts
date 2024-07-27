@@ -125,7 +125,7 @@ export default class Router extends EventEmitter {
 
             const match = this.isMatch(req, layer);
 
-            if (match) {
+            if (match && !err) {
                 return layer.handler && layer.handler(req, res, next);
             } else if (err) {
                 next(err);
@@ -141,11 +141,11 @@ export default class Router extends EventEmitter {
         if (!layer.route) return false;
         const route = this.getRoute(layer.route);
 
-        if (this.debug) {
-            console.log(
-                `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
-            );
-        }
+        // if (this.debug) {
+        //     console.log(
+        //         `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
+        //     );
+        // }
 
         return req.url === route && req.method === layer.method;
     }
