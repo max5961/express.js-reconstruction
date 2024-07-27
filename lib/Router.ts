@@ -44,7 +44,7 @@ export default class Router extends EventEmitter {
     getRoute(path: string): string {
         assert(path.startsWith("/"));
 
-        const route = (this.base + path).split("//").join("/");
+        const route = this.base + path;
 
         if (route.endsWith("/")) {
             return route.slice(0, route.length - 1);
@@ -53,20 +53,18 @@ export default class Router extends EventEmitter {
         return route;
     }
 
-    appendRoute(path: string): void {
-        assert(path.startsWith("/"));
-
-        this.base = this.getRoute(path);
-    }
-
     prependRoute(path: string): void {
         assert(path.startsWith("/"));
 
         this.base = path + this.base;
+
+        if (this.base.endsWith("/")) {
+            this.base = this.base.slice(0, this.base.length - 1);
+        }
     }
 
     /* Make sure every nested router has the correct path prepended */
-    prependRouters(route: string) {
+    prependRouters(route: string): void {
         if (!this.routers.length) return;
 
         this.routers.forEach((router) => {

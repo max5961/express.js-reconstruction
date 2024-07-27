@@ -1,5 +1,5 @@
 import path from "path";
-import express, { Router, Req, Res, HttpError, Next } from "../lib/express";
+import express, { Req, Res, HttpError, Next } from "../lib/express";
 import aRouter from "./routes/aRouter";
 const app = express();
 
