@@ -24,7 +24,7 @@ export default function createApplication(): App {
     app.on(
         App.IncomingRequest,
         (req: http.IncomingMessage, serverRes: http.ServerResponse) => {
-            const res = new HttpResponse(serverRes);
+            const res = new HttpResponse(req, serverRes);
 
             const done = begin(req as Types.Req, res);
 

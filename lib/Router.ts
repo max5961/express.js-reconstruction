@@ -13,22 +13,17 @@ import fs from "fs";
 import path from "path";
 import assert from "assert";
 
-type MiddlewareMethod = (
-    route: string,
-    handler: Function | Function[],
-    ...argsHandlers: Function[]
-) => void;
-
 export default class Router extends EventEmitter {
     public stack: Layer[];
     public base: string;
     public routers: Router[];
     public debug: boolean;
 
-    public get!: MiddlewareMethod;
-    public post!: MiddlewareMethod;
-    public put!: MiddlewareMethod;
-    public delete!: MiddlewareMethod;
+    public get!: VerbArgs;
+    public post!: VerbArgs;
+    public put!: VerbArgs;
+    public delete!: VerbArgs;
+    public all!: VerbArgs;
 
     constructor() {
         super();
@@ -44,17 +39,22 @@ export default class Router extends EventEmitter {
     getRoute(path: string): string {
         assert(path.startsWith("/"));
 
-        const route = this.base + path;
-
-        if (route.endsWith("/")) {
-            return route.slice(0, route.length - 1);
+        let base = this.base;
+        if (base.endsWith("/")) {
+            base = base.slice(0, base.length - 1);
         }
 
-        return route;
+        if (path.endsWith("/")) {
+            path = path.slice(0, path.length - 1);
+        }
+
+        if (base + path === "") return "/";
+        return base + path;
     }
 
     prependRoute(path: string): void {
         assert(path.startsWith("/"));
+        assert(this.base.startsWith("/"));
 
         this.base = path + this.base;
 
@@ -147,24 +147,20 @@ export default class Router extends EventEmitter {
         //     );
         // }
 
+        if (layer.method === "ALL" && req.url === route) return true;
+
         return req.url === route && req.method === layer.method;
     }
 
     handleUseNoRoute(
         handler: Function | Function[],
         ...args: Function[]
-    ): Router {
+    ): void {
         const allHandlers: Function[] = [];
 
         if (Array.isArray(handler)) {
             allHandlers.push(...handler);
         } else {
-            allHandlers.push(handler);
-        }
-
-        if (handler && Array.isArray(handler)) {
-            allHandlers.push(...handler);
-        } else if (handler) {
             allHandlers.push(handler);
         }
 
@@ -179,15 +175,13 @@ export default class Router extends EventEmitter {
             }
             this.stack.push(layer);
         });
-
-        return this;
     }
 
     handleUseWithRoute(
         route: string,
         handler: Function | Function[],
         ...args: Function[]
-    ): Router {
+    ): void {
         const handlers: Function[] = Array.isArray(handler)
             ? handler
             : [handler, ...args];
@@ -212,19 +206,11 @@ export default class Router extends EventEmitter {
                 return layer;
             }),
         );
-
-        return this;
     }
 
-    handleUseRouter(route: string | undefined, router: Router): Router {
+    handleUseRouter(route: string | undefined, router: Router): void {
         this.routers.push(router);
 
-        // Append route to router.base (which is by default "/");
-        // router.prependRoute(route || "/");
-
-        // router.routers.forEach((r) => {
-        //     r.prependRoute(router.base);
-        // });
         this.prependRouters(route || "");
 
         // Append middleware to this current Routers stack that will
@@ -236,8 +222,6 @@ export default class Router extends EventEmitter {
         const layer = new Layer().addHandler(handler);
 
         this.stack.push(layer);
-
-        return this;
     }
 
     use(
@@ -252,15 +236,17 @@ export default class Router extends EventEmitter {
 
         if (!route && !(handlerOrRouter instanceof Router)) {
             assert(typeof routeOrHandler !== "string");
-            return this.handleUseNoRoute(routeOrHandler!, ...args);
+            this.handleUseNoRoute(routeOrHandler!, ...args);
         } else if (handlerOrRouter && !(handlerOrRouter instanceof Router)) {
             assert(typeof route === "string");
-            return this.handleUseWithRoute(route, handlerOrRouter, ...args);
+            this.handleUseWithRoute(route, handlerOrRouter, ...args);
         } else if (handlerOrRouter instanceof Router) {
-            return this.handleUseRouter(route, handlerOrRouter);
+            this.handleUseRouter(route, handlerOrRouter);
         } else {
             throw new Error("Invalid function signature");
         }
+
+        return this;
     }
 
     static(filePath: string) {
@@ -286,22 +272,48 @@ export default class Router extends EventEmitter {
             };
         });
     }
+
+    route(rtPath: string): Router {
+        const router = new Router();
+        this.use(rtPath, router);
+        return router;
+    }
 }
 
+type VerbArgs = (
+    routeOrHandler: string | Function | Function[],
+    handler?: Function | Function[],
+    ...argsHandlers: Function[]
+) => Router;
+
 // These all require a path argument.
-(["get", "post", "put", "delete"] as Lowercase<AppMethod>[]).forEach(
+(["get", "post", "put", "delete", "all"] as Lowercase<AppMethod>[]).forEach(
     (method) => {
         Router.prototype[method] = function (
-            route: string,
-            handler: Function | Function[],
+            routeOrHandler: string | Function | Function[],
+            handler?: Function | Function[],
             ...argsHandlers: Function[]
         ): Router {
+            let route = routeOrHandler;
+            if (typeof routeOrHandler !== "string") {
+                route = "/";
+            }
+
+            assert(typeof route === "string");
+
             const stack = this.stack;
             const allHandlers = [];
-            if (Array.isArray(handler)) {
-                allHandlers.push(...handler);
-            } else {
+
+            if (typeof routeOrHandler === "function") {
+                allHandlers.push(routeOrHandler);
+            } else if (Array.isArray(routeOrHandler)) {
+                allHandlers.push(...routeOrHandler);
+            }
+
+            if (handler && typeof handler === "function") {
                 allHandlers.push(handler);
+            } else if (handler && Array.isArray(handler)) {
+                allHandlers.push(...handler);
             }
 
             allHandlers.push(...argsHandlers);

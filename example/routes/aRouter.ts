@@ -3,7 +3,6 @@ import { Next, Req, Res } from "../../lib/types";
 import bRouter from "./bRouter";
 
 const aRouter = new Router();
-// aRouter.debug = true;
 
 aRouter.get("/", (req: Req, res: Res, next: Next) => {
     res.status(200).send("/a");

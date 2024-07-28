@@ -4,15 +4,24 @@ import assert from "assert";
 
 export default class HttpResponse {
     private res: http.ServerResponse;
+    private req: http.IncomingMessage;
 
-    constructor(serverReponse: http.ServerResponse) {
+    constructor(
+        request: http.IncomingMessage,
+        serverReponse: http.ServerResponse,
+    ) {
         this.res = serverReponse;
+        this.req = request;
     }
 
     status(code: number): HttpResponse {
         this.res.statusCode = code;
         return this;
     }
+
+    // type(type: MIMEType): void {
+    //     //
+    // }
 
     send(content: string): void {
         assert(typeof content === "string", "Argument must be of type: string");
@@ -21,14 +30,35 @@ export default class HttpResponse {
         this.res.end(content);
     }
 
+    sendStatus(code: number): void {
+        this.res.statusCode = code;
+        this.res.end(code);
+    }
+
     json<T extends object>(content: T): void {
         this.res.setHeader("Content-Type", "application/json");
         this.res.end(JSON.stringify(content));
     }
 
-    sendFile(path: string): void {
-        const file = fs.readFileSync(path, "utf-8");
+    sendFile(route: string): void {
+        const file = fs.readFileSync(route, "utf-8");
         this.res.setHeader("Content-Type", "text/html");
         this.res.end(file);
+    }
+
+    redirect(initRoute: string): void {
+        let route = initRoute;
+
+        /* Redirect to path relative to the requesting URL by not prefixing
+         * with '/' */
+        if (!route.startsWith("/")) {
+            route = this.req.url + "/" + route;
+        }
+
+        this.res.writeHead(302, {
+            location: route,
+        });
+
+        this.res.end(initRoute);
     }
 }
