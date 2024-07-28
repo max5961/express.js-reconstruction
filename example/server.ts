@@ -12,25 +12,20 @@ app.use((req: Req, res: Res, next: Next) => {
     next();
 });
 
+app.use(express.json());
+
 app.get("/", (req: Req, res: Res) => {
-    res.status(200).send("ayo");
+    res.status(200).send("root");
 });
 
 app.use("/homepage", app.static(path.resolve("./example/views")));
 
 app.use("/a", aRouter);
 
-app.get("/foo", (req: Req, res: Res) => {
-    res.redirect("bar");
-});
+app.post("/foo", async (req: Req, res: Res) => {
+    console.log(req.body);
 
-app.get("/bar", (req: Req, res: Res) => {
-    // Will ultimately redirect to /foo/bar
-    res.redirect("/foo");
-});
-
-app.get("/foo/bar", (req: Req, res: Res) => {
-    res.status(200).send("ayoooo");
+    res.status(200).json({ foo: "bar" });
 });
 
 app.use((err: HttpError, req: Req, res: Res, next: Next) => {

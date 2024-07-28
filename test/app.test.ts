@@ -127,10 +127,7 @@ describe("Router", () => {
             });
         }
 
-        router.dispatch(req, res, (err?: HttpError) => {
-            if (err) {
-                console.log("ayo error?");
-            }
+        router.dispatch(req, res, () => {
             expect(mock).toHaveBeenCalledTimes(1);
         });
     });

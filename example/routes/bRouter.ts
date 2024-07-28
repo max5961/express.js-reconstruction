@@ -1,9 +1,8 @@
-import Router from "../../lib/Router";
+import express from "../../lib/express";
 import { Next, Req, Res } from "../../lib/types";
 import cRouter from "./cRouter";
 
-const bRouter = new Router();
-// bRouter.debug = true;
+const bRouter = new express.Router();
 
 bRouter.get("/", (req: Req, res: Res, next: Next) => {
     res.status(200).send("/a/b");

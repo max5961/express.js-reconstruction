@@ -19,10 +19,6 @@ export default class HttpResponse {
         return this;
     }
 
-    // type(type: MIMEType): void {
-    //     //
-    // }
-
     send(content: string): void {
         assert(typeof content === "string", "Argument must be of type: string");
 
