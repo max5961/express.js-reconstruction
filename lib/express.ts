@@ -6,19 +6,22 @@ import urlencoded from "./urlencoded";
 import * as Types from "./types";
 import http from "http";
 
-const begin = (req: Types.Req, res: Types.Res) => (err?: Types.HttpError) => {
-    if (err && typeof err !== "string") {
-        err.status && res.status(err.status);
+const begin =
+    (req: Types.Req, res: Types.Res, app: App) => (err?: Types.HttpError) => {
+        req.app = app;
 
-        if (err.stack) {
-            return res.send(err.stack);
+        if (err && typeof err !== "string") {
+            err.status && res.status(err.status);
+
+            if (err.stack) {
+                return res.send(err.stack);
+            }
+
+            return res.send(err.message);
         }
 
-        return res.send(err.message);
-    }
-
-    res.status(404).send(`Cannot ${req.method} ${req.url}`);
-};
+        res.status(404).send(`Cannot ${req.method} ${req.url}`);
+    };
 
 interface Express {
     (): App;
@@ -33,9 +36,9 @@ const express: Express = (): App => {
     app.on(
         App.IncomingRequest,
         (req: http.IncomingMessage, serverRes: http.ServerResponse) => {
-            const res = new HttpResponse(req, serverRes);
+            const res = new HttpResponse(req, serverRes, app);
 
-            const done = begin(req as Types.Req, res);
+            const done = begin(req as Types.Req, res, app);
 
             app.dispatch(req as Types.Req, res, done);
         },

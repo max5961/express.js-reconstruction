@@ -1,10 +1,12 @@
 import http from "http";
 import HttpResponse from "./HttpResponse";
+import App from "./App";
 
 /* The app[method] names */
 export type AppMethod = "GET" | "POST" | "PUT" | "DELETE" | "ALL" | "USE";
 
 export type Req = http.IncomingMessage & {
+    app: App;
     body?: any;
     params?: any;
 };

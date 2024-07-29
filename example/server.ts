@@ -15,6 +15,8 @@ app.use((req: Req, res: Res, next: Next) => {
 app.use(express.json());
 app.use(express.urlencoded());
 
+app.set("views", path.resolve("./example/views"));
+
 app.get("/", (req: Req, res: Res) => {
     if (req.body) {
         return res.status(200).json(req.body);
@@ -36,6 +38,14 @@ app.get("/bro/:id/:foobar", (req: Req, res: Res, next: Next) => {
     console.log(req.params);
 
     res.status(200).json(req.params);
+});
+
+app.get("/views-test", (req: Req, res: Res, next: Next) => {
+    res.status(200).render("index", {
+        user: {
+            name: "John",
+        },
+    });
 });
 
 app.use((err: HttpError, req: Req, res: Res, next: Next) => {

@@ -5,10 +5,12 @@
         "test": "jest ./test/*"
     },
     "dependencies": {
+        "ejs": "^3.1.10",
         "nodemon": "^3.1.4",
         "ts-node": "^10.9.2"
     },
     "devDependencies": {
+        "@types/ejs": "^3.1.5",
         "@types/jest": "^29.5.12",
         "@types/node": "^20.14.11",
         "@types/qs": "^6.9.15",

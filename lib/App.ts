@@ -2,11 +2,22 @@ import http from "http";
 import Router from "./Router";
 
 export default class App extends Router {
+    private settings: { [key: string]: string };
+
     constructor() {
         super();
+        this.settings = {};
     }
 
     static IncomingRequest: string = "INCOMING_REQUEST";
+
+    set(key: string, val: string): void {
+        this.settings[key] = val;
+    }
+
+    getSetting(key: string): string | null {
+        return this.settings[key] || null;
+    }
 
     startResponse = (
         req: http.IncomingMessage,
