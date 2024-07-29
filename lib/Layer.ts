@@ -1,3 +1,4 @@
+import Router from "./Router";
 import {
     Req,
     Res,
@@ -6,6 +7,7 @@ import {
     Next,
     ErrorHandler,
     HttpError,
+    RouterHandler,
 } from "./types";
 
 export default class Layer {
@@ -13,12 +15,14 @@ export default class Layer {
     public method!: AppMethod;
     public handler!: Handler | null;
     public errorHandler!: ErrorHandler | null;
+    public routerHandler!: RouterHandler | null;
     private _isMod: boolean;
 
     constructor() {
         this.route = null;
         this.handler = null;
         this.errorHandler = null;
+        this.routerHandler = null;
         this._isMod = false;
     }
 
@@ -64,6 +68,11 @@ export default class Layer {
             }
         };
 
+        return this;
+    }
+
+    addRouterHandler(routerHandler: RouterHandler): Layer {
+        this.routerHandler = routerHandler;
         return this;
     }
 

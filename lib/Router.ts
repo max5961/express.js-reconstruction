@@ -77,6 +77,7 @@ export default class Router extends EventEmitter {
         let idx = 0;
         let sync = 0;
 
+        // this should probably be moved to inside of next
         if (this.stack.length === 0) {
             return done();
         }
@@ -96,8 +97,16 @@ export default class Router extends EventEmitter {
 
             const layer = this.stack[idx++];
 
+            // This is a Router, and we need to make sure it has access to the
+            // Error object if there is one
+            if (layer.routerHandler) {
+                const handler = layer.routerHandler(err) as Handler;
+                layer.addHandler(handler);
+            }
+
             // We are at the end of the stack, exit to the next router
             if (!layer) {
+                console.log(`End of stack: ${err?.message}`);
                 return done(err);
             }
 
@@ -111,14 +120,9 @@ export default class Router extends EventEmitter {
             /* Before doing route and method checks, make sure any non-route
              * handling middleware has a chance to be executed */
             if (!layer.doesHandleRoutes()) {
-                if (err && typeof err != "string") {
-                    return (
-                        layer.errorHandler &&
-                        layer.errorHandler(err, req, res, next)
-                    );
-                }
-
-                if (layer.handler) {
+                if (err && typeof err != "string" && layer.errorHandler) {
+                    return layer.errorHandler(err, req, res, next);
+                } else if (layer.handler) {
                     return layer.handler(req, res, next);
                 }
             }
@@ -187,17 +191,17 @@ export default class Router extends EventEmitter {
             : [handler, ...args];
 
         this.stack.push(
-            ...handlers.map((handler) => {
+            ...handlers.map((h) => {
                 const layer = new Layer();
 
-                if (handler.length === 1) {
+                if (h.length === 1) {
                     // For express.static. Returns a Layer, but needed a way
                     // to get a dynamic route argument into each layer.
-                    return handler(route);
-                } else if (handler.length === 4) {
-                    layer.addErrorHandler(handler as ErrorHandler);
+                    return h(route);
+                } else if (h.length === 4) {
+                    layer.addErrorHandler(h as ErrorHandler);
                 } else {
-                    layer.addHandler(handler as Handler);
+                    layer.addHandler(h as Handler);
                 }
 
                 route && layer.addRoute(route);
@@ -215,11 +219,16 @@ export default class Router extends EventEmitter {
 
         // Append middleware to this current Routers stack that will
         // execute the middleware in the routers stack
-        const handler = (req: Req, res: Res, done: Next) => {
-            router.dispatch(req, res, done);
-        };
+        const routerHandler =
+            (err?: HttpError) => (req: Req, res: Res, done: Next) => {
+                if (err) {
+                    router.dispatch(req, res, () => done(err));
+                } else {
+                    router.dispatch(req, res, done);
+                }
+            };
 
-        const layer = new Layer().addHandler(handler);
+        const layer = new Layer().addRouterHandler(routerHandler);
 
         this.stack.push(layer);
     }
@@ -236,6 +245,9 @@ export default class Router extends EventEmitter {
 
         if (!route && !(handlerOrRouter instanceof Router)) {
             assert(typeof routeOrHandler !== "string");
+            // if (typeof routeOrHandler === "function") {
+            //     console.log(routeOrHandler.length);
+            // }
             this.handleUseNoRoute(routeOrHandler!, ...args);
         } else if (handlerOrRouter && !(handlerOrRouter instanceof Router)) {
             assert(typeof route === "string");

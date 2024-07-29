@@ -24,3 +24,4 @@ export type ErrorHandler = (
     res: Res,
     next: Next,
 ) => void;
+export type RouterHandler = (err?: HttpError) => Handler;

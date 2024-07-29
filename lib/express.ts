@@ -1,8 +1,8 @@
-import { create } from "domain";
 import App from "./App";
 import HttpResponse from "./HttpResponse";
 import Router from "./Router";
 import json from "./jsonBodyParser";
+import urlencoded from "./urlencoded";
 import * as Types from "./types";
 import http from "http";
 
@@ -20,13 +20,14 @@ const begin = (req: Types.Req, res: Types.Res) => (err?: Types.HttpError) => {
     res.status(404).send(`Cannot ${req.method} ${req.url}`);
 };
 
-interface CreateApplication {
+interface Express {
     (): App;
     json: typeof json;
     Router: typeof Router;
+    urlencoded: typeof urlencoded;
 }
 
-const createApplication: CreateApplication = (): App => {
+const express: Express = (): App => {
     const app = new App();
 
     app.on(
@@ -43,9 +44,10 @@ const createApplication: CreateApplication = (): App => {
     return app;
 };
 
-createApplication.json = json;
-createApplication.Router = Router;
+express.json = json;
+express.Router = Router;
+express.urlencoded = urlencoded;
 
-export default createApplication;
+export default express;
 export { Router, begin };
 export * from "./types";
