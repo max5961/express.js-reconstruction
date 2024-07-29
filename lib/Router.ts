@@ -77,12 +77,11 @@ export default class Router extends EventEmitter {
         let idx = 0;
         let sync = 0;
 
-        // this should probably be moved to inside of next
-        if (this.stack.length === 0) {
-            return done();
-        }
-
         const next = (err?: HttpError) => {
+            if (this.stack.length === 0) {
+                return done(err);
+            }
+
             // Middleware passed in 'router' to 'next'.  Exit router
             if (err && err === "router") {
                 return done();
@@ -90,8 +89,6 @@ export default class Router extends EventEmitter {
 
             // Middleware passed in 'route' to 'next'.  Exit current route
             if (err && err === "route") {
-                // Still not sure why Express source code does 'done' here, or
-                // even the use case of this feature.
                 return next();
             }
 
@@ -190,6 +187,7 @@ export default class Router extends EventEmitter {
 
     handleUseNoRoute(
         handler: Function | Function[],
+        handlerOrRouter: Function | Function[] | undefined,
         ...args: Function[]
     ): void {
         const allHandlers: Function[] = [];
@@ -198,6 +196,12 @@ export default class Router extends EventEmitter {
             allHandlers.push(...handler);
         } else {
             allHandlers.push(handler);
+        }
+
+        if (Array.isArray(handlerOrRouter)) {
+            allHandlers.push(...handlerOrRouter);
+        } else if (handlerOrRouter) {
+            allHandlers.push(handlerOrRouter);
         }
 
         allHandlers.push(...args);
@@ -249,8 +253,9 @@ export default class Router extends EventEmitter {
 
         this.prependRouters(route || "");
 
-        // Append middleware to this current Routers stack that will
-        // execute the middleware in the routers stack
+        /* Entry point to execute the nested router's stack.  It needs access to
+         * the current router's error state to allow for error state to fall
+         * through routers. */
         const routerHandler =
             (err?: HttpError) => (req: Req, res: Res, done: Next) => {
                 if (err) {
@@ -277,10 +282,7 @@ export default class Router extends EventEmitter {
 
         if (!route && !(handlerOrRouter instanceof Router)) {
             assert(typeof routeOrHandler !== "string");
-            // if (typeof routeOrHandler === "function") {
-            //     console.log(routeOrHandler.length);
-            // }
-            this.handleUseNoRoute(routeOrHandler!, ...args);
+            this.handleUseNoRoute(routeOrHandler, handlerOrRouter, ...args);
         } else if (handlerOrRouter && !(handlerOrRouter instanceof Router)) {
             assert(typeof route === "string");
             this.handleUseWithRoute(route, handlerOrRouter, ...args);

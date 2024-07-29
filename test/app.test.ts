@@ -320,6 +320,248 @@ describe("router.route(path) allows for method chaining", () => {
     });
 });
 
+describe("Multiple handler arguments/arrays of handlers", () => {
+    it("Accepts an array of handlers", () => {
+        const { req, res, done, router } = newTest("/", "GET");
+
+        const mock = jest.fn();
+
+        router.use([
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+        ]);
+
+        router.dispatch(req, res, () => {
+            expect(mock).toHaveBeenCalledTimes(5);
+        });
+    });
+
+    it("Accepts ...args as handlers", () => {
+        const { req, res, done, router } = newTest("/", "GET");
+
+        const mock = jest.fn();
+
+        router.use(
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+        );
+
+        router.dispatch(req, res, () => {
+            expect(mock).toHaveBeenCalledTimes(5);
+        });
+    });
+
+    it("Accepts ...args and array of handlers together", () => {
+        const { req, res, done, router } = newTest("/", "GET");
+
+        const mock = jest.fn();
+
+        router.use(
+            [
+                (req: Req, res: Res, next: Next) => {
+                    mock();
+                    next();
+                },
+                (req: Req, res: Res, next: Next) => {
+                    mock();
+                    next();
+                },
+            ],
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+            (req: Req, res: Res, next: Next) => {
+                mock();
+                next();
+            },
+        );
+
+        router.dispatch(req, res, () => {
+            expect(mock).toHaveBeenCalledTimes(5);
+        });
+    });
+
+    /* Test array of handlers and ...args with router.METHODS */
+    const { req, res, done, router } = newTest("/", "GET");
+
+    const getMock = jest.fn();
+    const postMock = jest.fn();
+    const putMock = jest.fn();
+    const deleteMock = jest.fn();
+    const allMock = jest.fn();
+
+    const getHandlers = [];
+    const postHandlers = [];
+    const putHandlers = [];
+    const deleteHandlers = [];
+    const allHandlers = [];
+
+    for (let i = 0; i < 5; ++i) {
+        req.method = "GET";
+        getHandlers.push((req: Req, res: Res, next: Next) => {
+            getMock();
+            next();
+        });
+
+        req.method = "POST";
+        postHandlers.push((req: Req, res: Res, next: Next) => {
+            postMock();
+            next();
+        });
+
+        req.method = "PUT";
+        putHandlers.push((req: Req, res: Res, next: Next) => {
+            putMock();
+            next();
+        });
+
+        req.method = "DELETE";
+        deleteHandlers.push((req: Req, res: Res, next: Next) => {
+            deleteMock();
+            next();
+        });
+
+        allHandlers.push((req: Req, res: Res, next: Next) => {
+            allMock();
+            next();
+        });
+    }
+
+    router.get(
+        "/",
+        getHandlers,
+        (req: Req, res: Res, next: Next) => {
+            getMock();
+            next();
+        },
+        (req: Req, res: Res, next: Next) => {
+            getMock();
+            next();
+        },
+    );
+
+    router.post(
+        "/",
+        postHandlers,
+        (req: Req, res: Res, next: Next) => {
+            postMock();
+            next();
+        },
+        (req: Req, res: Res, next: Next) => {
+            postMock();
+            next();
+        },
+    );
+    router.put(
+        "/",
+        putHandlers,
+        (req: Req, res: Res, next: Next) => {
+            putMock();
+            next();
+        },
+        (req: Req, res: Res, next: Next) => {
+            putMock();
+            next();
+        },
+    );
+    router.delete(
+        "/",
+        deleteHandlers,
+        (req: Req, res: Res, next: Next) => {
+            deleteMock();
+            next();
+        },
+        (req: Req, res: Res, next: Next) => {
+            deleteMock();
+            next();
+        },
+    );
+    router.all(
+        "/",
+        allHandlers,
+        (req: Req, res: Res, next: Next) => {
+            allMock();
+            next();
+        },
+        (req: Req, res: Res, next: Next) => {
+            allMock();
+            next();
+        },
+    );
+
+    it("Array of handlers and ...args work with GET", () => {
+        req.method = "GET";
+        router.dispatch(req, res, () => {
+            expect(getMock).toHaveBeenCalledTimes(7);
+        });
+    });
+    it("Array of handlers works and ...args work with POST", () => {
+        req.method = "POST";
+        router.dispatch(req, res, () => {
+            expect(postMock).toHaveBeenCalledTimes(7);
+        });
+    });
+    it("Array of handlers and ...args work with PUT", () => {
+        req.method = "PUT";
+        router.dispatch(req, res, () => {
+            expect(putMock).toHaveBeenCalledTimes(7);
+        });
+    });
+    it("Array of handlers and ...args work with DELETE", () => {
+        req.method = "DELETE";
+        router.dispatch(req, res, () => {
+            expect(deleteMock).toHaveBeenCalledTimes(7);
+        });
+    });
+    it("Array of handlers and ...args work with DELETE", () => {
+        req.method = "DELETE";
+        router.dispatch(req, res, () => {
+            expect(allMock).toHaveBeenCalledTimes(35);
+        });
+    });
+});
+
 function newTest(
     route: string = "/",
     method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
