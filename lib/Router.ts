@@ -141,19 +141,51 @@ export default class Router extends EventEmitter {
         next();
     };
 
+    // if (this.debug) {
+    //     console.log(
+    //         `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
+    //     );
+    // }
     isMatch(req: Req, layer: Layer): boolean {
         if (!layer.route) return false;
         const route = this.getRoute(layer.route);
+        const { params, paramRt, isSameLen } = this.getRouteParams(
+            route,
+            req.url || "",
+        );
 
-        // if (this.debug) {
-        //     console.log(
-        //         `url: ${req.url} | route: ${route} || method: ${req.method} | layermethod: ${layer.method}`,
-        //     );
-        // }
+        req.params = params;
 
-        if (layer.method === "ALL" && req.url === route) return true;
+        if (layer.method === "ALL" && req.url === paramRt) return true;
 
-        return req.url === route && req.method === layer.method;
+        return req.url === paramRt && req.method === layer.method;
+    }
+
+    getRouteParams(
+        route: string,
+        reqRoute: string,
+    ): {
+        params: { [key: string]: string };
+        paramRt: string;
+        isSameLen: boolean;
+    } {
+        const L = route.split("/");
+        const R = reqRoute.split("/");
+
+        const params: { [key: string]: string } = {};
+
+        for (let i = 0; i < L.length; ++i) {
+            if (L[i].startsWith(":")) {
+                params[L[i].slice(1)] = R[i];
+                L[i] = R[i];
+            }
+        }
+
+        return {
+            params,
+            paramRt: L.join("/"),
+            isSameLen: L.length === R.length,
+        };
     }
 
     handleUseNoRoute(

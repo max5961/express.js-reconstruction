@@ -32,8 +32,10 @@ app.post("/foo", async (req: Req, res: Res) => {
     res.status(200).json({ foo: "bar" });
 });
 
-app.get("/bro", (req: Req, res: Res, next: Next) => {
-    res.status(200).send("bro");
+app.get("/bro/:id/:foobar", (req: Req, res: Res, next: Next) => {
+    console.log(req.params);
+
+    res.status(200).json(req.params);
 });
 
 app.use((err: HttpError, req: Req, res: Res, next: Next) => {
