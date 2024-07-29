@@ -5,9 +5,7 @@
         "test": "jest ./test/*"
     },
     "dependencies": {
-        "encodeurl": "^2.0.0",
         "nodemon": "^3.1.4",
-        "qs": "^6.12.3",
         "ts-node": "^10.9.2"
     },
     "devDependencies": {

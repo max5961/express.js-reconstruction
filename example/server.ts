@@ -13,10 +13,12 @@ app.use((req: Req, res: Res, next: Next) => {
 });
 
 app.use(express.json());
-// app.use(express.urlencoded());
+app.use(express.urlencoded());
 
 app.get("/", (req: Req, res: Res) => {
-    throw new Error("brodude");
+    if (req.body) {
+        return res.status(200).json(req.body);
+    }
     res.status(200).send("root");
 });
 
@@ -30,9 +32,16 @@ app.post("/foo", async (req: Req, res: Res) => {
     res.status(200).json({ foo: "bar" });
 });
 
+app.get("/bro", (req: Req, res: Res, next: Next) => {
+    res.status(200).send("bro");
+});
+
 app.use((err: HttpError, req: Req, res: Res, next: Next) => {
-    console.log("app.use error handler");
-    res.status(500).send("error message placeholder");
+    let msg: string | HttpError = err;
+    if (typeof err !== "string") {
+        msg = `Error Message: ${err.message}`;
+    }
+    res.status(500).send(msg as string);
 });
 
 export default app;

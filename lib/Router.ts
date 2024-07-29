@@ -97,17 +97,17 @@ export default class Router extends EventEmitter {
 
             const layer = this.stack[idx++];
 
+            // We are at the end of the stack, exit to the next router
+            if (!layer) {
+                // console.log(`End of stack: ${err?.message}`);
+                return done(err);
+            }
+
             // This is a Router, and we need to make sure it has access to the
             // Error object if there is one
             if (layer.routerHandler) {
                 const handler = layer.routerHandler(err) as Handler;
                 layer.addHandler(handler);
-            }
-
-            // We are at the end of the stack, exit to the next router
-            if (!layer) {
-                console.log(`End of stack: ${err?.message}`);
-                return done(err);
             }
 
             /* Prevent call stack overflow.  Once a stack size of 100 is reached,
