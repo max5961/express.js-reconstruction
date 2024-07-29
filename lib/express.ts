@@ -8,7 +8,8 @@ import http from "http";
 import expressStatic from "./static";
 
 const begin =
-    (req: Types.Req, res: Types.Res, app: App) => (err?: Types.HttpError) => {
+    (req: Types.Req, res: Types.Res, app: App) =>
+    (err?: Types.HttpError | "router" | "route") => {
         req.app = app;
 
         if (err && typeof err !== "string") {

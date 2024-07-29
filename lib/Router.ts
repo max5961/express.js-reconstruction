@@ -9,8 +9,6 @@ import {
     HttpError,
 } from "./types";
 import EventEmitter from "events";
-import fs from "fs";
-import path from "path";
 import assert from "assert";
 
 export default class Router extends EventEmitter {
@@ -77,7 +75,7 @@ export default class Router extends EventEmitter {
         let idx = 0;
         let sync = 0;
 
-        const next = (err?: HttpError) => {
+        const next = (err?: HttpError | "router" | "route") => {
             if (this.stack.length === 0) {
                 return done(err);
             }

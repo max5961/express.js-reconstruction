@@ -9,7 +9,7 @@ app.use((req: Req, res: Res, next: Next) => {
     const url = req.url;
 
     console.log(`${method}: http://localhost:5000${url}`);
-    next();
+    next("route");
 });
 
 app.use(express.json());
@@ -24,8 +24,8 @@ app.set("views", path.resolve("./example/views"));
 //     res.status(200).send("root");
 // });
 
-// app.use("/homepage", express.static(path.resolve("./example/views")));
-app.use(express.static(path.resolve("./example/views")));
+app.use("/homepage", express.static(path.resolve("./example/views")));
+// app.use(express.static(path.resolve("./example/views")));
 
 app.use("/a", aRouter);
 
@@ -50,11 +50,7 @@ app.get("/views-test", (req: Req, res: Res, next: Next) => {
 });
 
 app.use((err: HttpError, req: Req, res: Res, next: Next) => {
-    let msg: string | HttpError = err;
-    if (typeof err !== "string") {
-        msg = `Error Message: ${err.message}`;
-    }
-    res.status(500).send(msg as string);
+    res.status(500).send(err.stack || "");
 });
 
 export default app;

@@ -13,12 +13,9 @@ export type Req = http.IncomingMessage & {
 
 export type Res = HttpResponse;
 
-export type HttpError =
-    | (Error & { status?: number } & { [key: string]: string })
-    | "router"
-    | "route";
+export type HttpError = Error & { status?: number } & { [key: string]: string };
 
-export type Next = (err?: HttpError) => void;
+export type Next = (err?: HttpError | "router" | "route") => void;
 export type Handler = (req: Req, res: Res, next: Next) => void;
 export type ErrorHandler = (
     err: HttpError,
