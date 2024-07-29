@@ -17,14 +17,15 @@ app.use(express.urlencoded());
 
 app.set("views", path.resolve("./example/views"));
 
-app.get("/", (req: Req, res: Res) => {
-    if (req.body) {
-        return res.status(200).json(req.body);
-    }
-    res.status(200).send("root");
-});
+// app.get("/", (req: Req, res: Res) => {
+//     if (req.body) {
+//         return res.status(200).json(req.body);
+//     }
+//     res.status(200).send("root");
+// });
 
-app.use("/homepage", app.static(path.resolve("./example/views")));
+// app.use("/homepage", express.static(path.resolve("./example/views")));
+app.use(express.static(path.resolve("./example/views")));
 
 app.use("/a", aRouter);
 

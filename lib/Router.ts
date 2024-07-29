@@ -206,15 +206,24 @@ export default class Router extends EventEmitter {
 
         allHandlers.push(...args);
 
-        allHandlers.forEach((h) => {
+        for (const h of allHandlers) {
+            // For express.static
+            if (h.length === 1) {
+                const layer = h("/") as Layer;
+                this.stack.push(layer);
+                continue;
+            }
+
             const layer = new Layer();
+
             if (h.length > 3) {
                 layer.addErrorHandler(h as ErrorHandler);
             } else {
                 layer.addHandler(h as Handler);
             }
+
             this.stack.push(layer);
-        });
+        }
     }
 
     handleUseWithRoute(
@@ -293,30 +302,6 @@ export default class Router extends EventEmitter {
         }
 
         return this;
-    }
-
-    static(filePath: string) {
-        const files = fs.readdirSync(filePath);
-
-        return files.map((file) => {
-            return (route: string) => {
-                let getRoute = route;
-                if (file !== "index.html") {
-                    getRoute = `${route}/${file}`;
-                }
-
-                const handler = (req: Req, res: Res, next: Next): void => {
-                    res.status(200).sendFile(
-                        path.resolve(`${filePath}/${file}`),
-                    );
-                };
-
-                return new Layer()
-                    .addMethod("GET")
-                    .addHandler(handler)
-                    .addRoute(getRoute);
-            };
-        });
     }
 
     route(rtPath: string): Router {

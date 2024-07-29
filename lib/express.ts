@@ -5,6 +5,7 @@ import json from "./jsonBodyParser";
 import urlencoded from "./urlencoded";
 import * as Types from "./types";
 import http from "http";
+import expressStatic from "./static";
 
 const begin =
     (req: Types.Req, res: Types.Res, app: App) => (err?: Types.HttpError) => {
@@ -28,6 +29,7 @@ interface Express {
     json: typeof json;
     Router: typeof Router;
     urlencoded: typeof urlencoded;
+    static: typeof expressStatic;
 }
 
 const express: Express = (): App => {
@@ -50,6 +52,7 @@ const express: Express = (): App => {
 express.json = json;
 express.Router = Router;
 express.urlencoded = urlencoded;
+express.static = expressStatic;
 
 export default express;
 export { Router, begin };
