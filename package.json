@@ -2,7 +2,9 @@
     "scripts": {
         "start": "tsc && node ./dist/index.js",
         "start:dev": "nodemon index.ts",
-        "test": "jest ./test/*"
+        "test": "TEST=true jest ./test/*",
+        "test:app": "jest ./test/app.test.ts",
+        "test:ex": "TEST=true jest ./test/example.test.ts"
     },
     "dependencies": {
         "ejs": "^3.1.10",

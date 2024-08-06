@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users</title>
+    <link rel="stylesheet" href="./users/style.css">
+</head>
+
+<body>
+    <form id="new-user-form">
+        <input type="text" name="name" id="name" placeholder="Name">
+        <input type="text" name="email" id="email" placeholder="Email">
+        <button type="submit">Add User</button>
+    </form>
+
+    <ul class="users-container">
+
+        <% users.forEach(user=> { %>
+            <li>
+                <%=user%>
+                    <button class="view">View</button>
+                    <button class="delete">Delete</button>
+            </li>
+            <% }) %>
+
+    </ul>
+
+    <script src="./users/script.js"></script>
+</body>
+
+</html>

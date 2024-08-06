@@ -1,0 +1,60 @@
+{
+    "categories": {
+        "20e39c6f-285d-42fb-8291-9f9920478e50": {
+            "name": "Bikes"
+        },
+        "b2d5b563-b8e9-4f08-b68e-509a1da502d5": {
+            "name": "Guitar Amps"
+        }
+    },
+    "items": {
+        "b9597dce-227a-4fd8-8056-e798794c7834": {
+            "name": "Street Racer 5000",
+            "price": 99.99,
+            "categoryId": "20e39c6f-285d-42fb-8291-9f9920478e50"
+        },
+        "88b73523-c751-4d55-8668-7cb083e4dbbf": {
+            "name": "EVH 5150",
+            "price": 1299.99,
+            "categoryId": "b2d5b563-b8e9-4f08-b68e-509a1da502d5"
+        }
+    },
+    "instances": {
+        "ec21212d-b81b-41f8-9d2a-8d0bda4d07eb": {
+            "itemId": "b9597dce-227a-4fd8-8056-e798794c7834",
+            "categoryId": "20e39c6f-285d-42fb-8291-9f9920478e50"
+        },
+        "3476be04-2954-4549-b049-58bb2ebcca07": {
+            "itemId": "b9597dce-227a-4fd8-8056-e798794c7834",
+            "categoryId": "20e39c6f-285d-42fb-8291-9f9920478e50"
+        },
+        "3fb2070c-a86d-427f-a408-fb943ca3e566": {
+            "itemId": "b9597dce-227a-4fd8-8056-e798794c7834",
+            "categoryId": "20e39c6f-285d-42fb-8291-9f9920478e50"
+        },
+        "c26bd7d2-7d5c-459c-af71-3104150d8609": {
+            "itemId": "b9597dce-227a-4fd8-8056-e798794c7834",
+            "categoryId": "20e39c6f-285d-42fb-8291-9f9920478e50"
+        },
+        "0311278a-249e-4f93-be30-29e850321291": {
+            "itemId": "b9597dce-227a-4fd8-8056-e798794c7834",
+            "categoryId": "20e39c6f-285d-42fb-8291-9f9920478e50"
+        },
+        "4490b9a4-6518-4f5c-9ea7-cbcd74abca57": {
+            "itemId": "b9597dce-227a-4fd8-8056-e798794c7834",
+            "categoryId": "20e39c6f-285d-42fb-8291-9f9920478e50"
+        },
+        "6abb73f6-c720-405f-b9f4-28dcac55073a": {
+            "itemId": "88b73523-c751-4d55-8668-7cb083e4dbbf",
+            "categoryId": "b2d5b563-b8e9-4f08-b68e-509a1da502d5"
+        },
+        "8a85fdd2-0f33-4069-9d51-8c1d1b428a82": {
+            "itemId": "88b73523-c751-4d55-8668-7cb083e4dbbf",
+            "categoryId": "b2d5b563-b8e9-4f08-b68e-509a1da502d5"
+        },
+        "860995ba-3ff0-4461-a693-512b30c1f704": {
+            "itemId": "88b73523-c751-4d55-8668-7cb083e4dbbf",
+            "categoryId": "b2d5b563-b8e9-4f08-b68e-509a1da502d5"
+        }
+    }
+}

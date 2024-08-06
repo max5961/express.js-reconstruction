@@ -66,7 +66,7 @@ describe("Router", () => {
         }
 
         return new Promise<string>((resolve, reject) => {
-            router.dispatch(req, res, (err?: HttpError) => {
+            router.dispatch(req, res, (err?: AllError) => {
                 if (err) return resolve("err");
                 resolve("clean");
             });
@@ -562,6 +562,7 @@ describe("Multiple handler arguments/arrays of handlers", () => {
     });
 });
 
+type AllError = HttpError | "router" | "route";
 function newTest(
     route: string = "/",
     method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
@@ -571,7 +572,7 @@ function newTest(
     const res = {} as Res;
     Object.setPrototypeOf(res, HttpResponse.prototype);
 
-    const done = (err?: HttpError) => {
+    const done = (err?: AllError) => {
         if (err) {
             throw new Error("Fail");
         }
