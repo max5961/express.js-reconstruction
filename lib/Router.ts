@@ -94,7 +94,6 @@ export default class Router extends EventEmitter {
 
             // We are at the end of the stack, exit to the next router
             if (!layer) {
-                // console.log(`End of stack: ${err?.message}`);
                 return done(err);
             }
 
